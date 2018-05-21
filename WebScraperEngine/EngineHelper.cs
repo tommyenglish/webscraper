@@ -33,7 +33,7 @@ namespace WebScraperEngine
 
         public async Task<IList<string>> GetItemUrlsAjax(IList<string> feedUrls, string jsonPath, string interpolationUrl = null)
         {
-            var result = new List<string>();
+            var itemUrlList = new List<string>();
             var browser = new ScrapingBrowser
             {
                 AllowAutoRedirect = true,
@@ -48,60 +48,10 @@ namespace WebScraperEngine
                 var json = JsonValue.Parse(response);
                 var path = JsonPath.Parse(jsonPath);
                 var itemUrls = path.Evaluate(json);
-                result.AddRange(itemUrls.Select(i => string.Format(interpolationUrl ?? "{0}", i.String)));
+                itemUrlList.AddRange(itemUrls.Select(i => string.Format(interpolationUrl ?? "{0}", i.String)));
             }
 
-            return result;
+            return itemUrlList;
         }
-
-        public string GetStringValue(JsonValue jsonValue, string jsonPath)
-        {
-            if (string.IsNullOrEmpty(jsonPath))
-            {
-                return string.Empty;
-            }
-
-            var path = JsonPath.Parse(jsonPath);
-            var result = path.Evaluate(jsonValue).FirstOrDefault();
-
-            return result?.String ?? string.Empty;
-        }
-
-        public async Task<Profile> CreateProfile(string itemUrl, string firstNamePath, string lastNamePath, string bioPath, string imageUrlPath, 
-            string emailPath, string groupsPath, string skillsPath, string pathwaysPath)
-        {
-            var browser = new ScrapingBrowser
-            {
-                AllowAutoRedirect = true,
-                AllowMetaRedirect = true,
-
-            };
-            var uri = new Uri(itemUrl);
-            var response = await browser.AjaxDownloadStringAsync(uri);
-            var jsonValue = JsonValue.Parse(response);
-
-            var profile = new Profile
-            {
-                FirstName = GetStringValue(jsonValue, firstNamePath),
-                LastName = GetStringValue(jsonValue, lastNamePath),
-                Bio = GetStringValue(jsonValue, bioPath),
-                ImageUrl = GetStringValue(jsonValue, imageUrlPath),
-                Email = GetStringValue(jsonValue, emailPath)
-            };
-
-            return profile;
-        }
-    }
-
-    public class Profile
-    {
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
-        public string Bio { get; set; }
-        public string ImageUrl { get; set; }
-        public string Email { get; set; }
-        public IEnumerable<string> Groups => Enumerable.Empty<string>();
-        public IEnumerable<string> Skills => Enumerable.Empty<string>();
-        public IEnumerable<string> Pathways => Enumerable.Empty<string>();
     }
 }
